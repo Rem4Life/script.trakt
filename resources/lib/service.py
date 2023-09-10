@@ -99,7 +99,7 @@ class traktService:
         self.dispatchQueue.purge()
 
         # setup event driven classes
-        self.Player = traktPlayer(action=self._dispatchQuedateutilue)
+        self.Player = traktPlayer(action=self._dispatchQueue)
         self.Monitor = traktMonitor(action=self._dispatchQueue)
 
         # init traktapi class
