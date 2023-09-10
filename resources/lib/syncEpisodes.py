@@ -4,7 +4,9 @@ import copy
 import logging
 
 from resources.lib import kodiUtilities, utilities
+from resources.lib.loggingService import get_logger
 
+stream_logger = get_logger("customLogger")
 logger = logging.getLogger(__name__)
 
 
@@ -46,6 +48,11 @@ class SyncEpisodes:
             traktShowsRated,
             traktEpisodesRated,
         ) = self.__traktLoadShows()
+
+        stream_logger.debug(
+            "[Episodes Sync] Trakt.tv collected show list: %s" % traktShowsCollected
+        )
+
         if not traktShowsCollected:
             logger.debug(
                 "[Episodes Sync] Error getting Trakt.tv collected show list, aborting tv show sync."

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import threading
 import logging
+from resources.lib.loggingService import setup_logging_client
+from resources.lib.loggingService import get_logger
 import xbmc
 import time
 import xbmcgui
@@ -106,6 +108,7 @@ class traktService:
         self.Player = traktPlayer(action=self._dispatchQueue)
         self.Monitor = traktMonitor(action=self._dispatchQueue)
 
+        setup_logging_client()
         # init traktapi class
         globals.traktapi = traktAPI()
 
