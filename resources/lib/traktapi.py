@@ -41,7 +41,7 @@ class traktAPI(object):
             }
 
         # Initialize tvdb api
-        # self.tvdb_api = tvdbAPI()
+        self.tvdb_api = tvdbAPI()
 
         # Configure
         Trakt.configuration.defaults.client(
@@ -169,14 +169,14 @@ class traktAPI(object):
         
         if result is None:
             logger.debug("[Personal debugging]: Result was null, fetching data ourself.")
-            logger.debug("[Personal debugging]: token: %s", self.token)
+            # logger.debug("[Personal debugging]: token: %s", self.token)
             logger.debug("[Personal debugging]: tvdb: %s", show['ids']['tvdb'])
             logger.debug("[Personal debugging]: season: %s", episode['season'])
             logger.debug("[Personal debugging]: number: %s", episode['number'])
 
-            response = self.tvdb_api.get_tvdb_series_extended(self.token, show['ids']['tvdb'], 'episodes', 'true')
+            response = self.tvdb_api.get_series_extended(show['ids']['tvdb'], 'episodes', 'true')
             episodes = response.get('data').get('episodes')
-            absolute_episode_number = self.tvdb_api.get_absolute_numbering(episodes, episode['season'], episode['number'])
+            absolute_episode_number = self.tvdb_api.convert_to_absolute_numbering(episodes, episode['season'], episode['number'])
 
             logger.debug("[Personal debugging]: response: %s", response)
             logger.debug("[Personal debugging]: episodes: %s", episodes)
