@@ -3,8 +3,10 @@
 import copy
 import logging
 
+from resources.lib import globals
 from resources.lib import kodiUtilities, utilities
 from resources.lib.loggingService import get_logger
+from pprint import pformat
 
 stream_logger = get_logger("customLogger")
 logger = logging.getLogger(__name__)
@@ -291,13 +293,62 @@ class SyncEpisodes:
                 int(y), line2=kodiUtilities.getString(32102) % (i, x)
             )
 
-            logger.debug("[Personal debug logging]: show")
-            logger.debug(show)
-
             # will keep the data in python structures - just like the KODI response
             show = show.to_dict()
 
+            logger.debug("showwwwwshowwwwwshowwwwwshowwwww")
             logger.debug(show)
+
+            seasons = show["seasons"]
+
+            has_multiple_seasons = any(item["number"] >= 2 for item in seasons)
+
+            if not has_multiple_seasons:
+                stream_logger.debug(
+                    "Serie: %s (%s)" % (str(show["title"]), str(show["ids"]["tvdb"]))
+                )
+
+                episode_objects = next(
+                    (season for season in seasons if season.get("number") == 1),
+                    None,
+                )["episodes"]
+
+                episodes = [
+                    episode_object["number"] for episode_object in episode_objects
+                ]
+
+                filtered_episodes = [
+                    episode for episode in episodes if episode < 1 or episode > 10
+                ]
+
+                if len(filtered_episodes) > 0:
+                    stream_logger.debug(
+                        "Episodes to find: %s", pformat(filtered_episodes)
+                    )
+
+                    series_info = globals.tvdbapi.get_series_extended(
+                        show["ids"]["tvdb"], "episodes", "true"
+                    )
+
+                    tvdb_episodes = series_info["data"]["episodes"]
+
+                    filtered_tvdb_episodes = [
+                        episode
+                        for episode in tvdb_episodes
+                        if episode["seasonNumber"] >= 1
+                    ]
+
+                    for episode_number in filtered_episodes:
+                        episode = filtered_tvdb_episodes[episode_number]
+
+                        stream_logger.debug(
+                            "Mapped episode %s to %sx%s"
+                            % (
+                                str(episode_number),
+                                str(episode["seasonNumber"]),
+                                str(episode["number"]),
+                            )
+                        )
 
             showsWatched["shows"].append(show)
 

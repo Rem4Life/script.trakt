@@ -2,3 +2,4 @@
 #
 
 traktapi = None
+tvdbapi = None

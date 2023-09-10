@@ -4,7 +4,7 @@ import logging
 import time
 from json import dumps, loads
 from sys import version_info
-from resources.lib.tvdbapi import tvdbAPI
+from resources.lib import globals
 
 import xbmcaddon
 from resources.lib import deviceAuthDialog
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 class traktAPI(object):
     __client_id = "d4161a7a106424551add171e5470112e4afdaf2438e6ef2fe0548edc75924868"
     __client_secret = "b5fcd7cb5d9bb963784d11bbf8535bc0d25d46225016191eb48e50792d2155c0"
-    tvdb_api = None
+    # tvdb_api = None
 
     def __init__(self, force=False):
         logger.debug("Initializing.")
@@ -46,7 +46,7 @@ class traktAPI(object):
             Trakt.http.proxies = {"http": proxyURL, "https": proxyURL}
 
         # Initialize tvdb api
-        self.tvdb_api = tvdbAPI()
+        # self.tvdb_api = tvdbAPI()
 
         # Configure
         Trakt.configuration.defaults.client(
@@ -182,11 +182,11 @@ class traktAPI(object):
             logger.debug("[Personal debugging]: season: %s", episode["season"])
             logger.debug("[Personal debugging]: number: %s", episode["number"])
 
-            response = self.tvdb_api.get_series_extended(
+            response = globals.tvdbapi.get_series_extended(
                 show["ids"]["tvdb"], "episodes", "true"
             )
             episodes = response.get("data").get("episodes")
-            absolute_episode_number = self.tvdb_api.convert_to_absolute_numbering(
+            absolute_episode_number = globals.tvdbapi.convert_to_absolute_numbering(
                 episodes, episode["season"], episode["number"]
             )
 

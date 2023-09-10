@@ -20,6 +20,7 @@ from resources.lib.rating import rateMedia
 from resources.lib.scrobbler import Scrobbler
 from resources.lib.sync import Sync
 from resources.lib.traktapi import traktAPI
+from resources.lib.tvdbapi import tvdbAPI
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +110,10 @@ class traktService:
         self.Monitor = traktMonitor(action=self._dispatchQueue)
 
         setup_logging_client()
+
+        # init traktapi class
+        globals.tvdbapi = tvdbAPI()
+
         # init traktapi class
         globals.traktapi = traktAPI()
 
