@@ -4,7 +4,7 @@ import logging.handlers
 
 
 def setup_logging_client():
-    root_logger = logging.getLogger()
+    root_logger = logging.getLogger("customer_logger")
     socket_handler = logging.handlers.SocketHandler("localhost", 9000)
     root_logger.addHandler(socket_handler)
     root_logger.setLevel(logging.DEBUG)
