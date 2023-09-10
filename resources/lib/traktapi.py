@@ -4,7 +4,7 @@ import logging
 import time
 from json import dumps, loads
 from sys import version_info
-from tvdbapi import tvdbAPI
+from resources.lib.tvdbapi import tvdbAPI
 
 import xbmcaddon
 from resources.lib import deviceAuthDialog
