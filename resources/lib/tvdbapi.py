@@ -1,4 +1,4 @@
-import simpleRequests as requests
+import resources.lib.simpleRequests as requests
 
 class tvdbAPI():
     login_url = "https://api4.thetvdb.com/v4/login"
