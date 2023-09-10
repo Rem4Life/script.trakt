@@ -1,3 +1,6 @@
+version 3.6.1
+- Mapping
+
 version 3.6.0
 - Clarify unit on startup delay
 - Migrate to new settings format
