@@ -47,42 +47,38 @@ from urllib.error import HTTPError as _HTTPError
 from urllib.parse import urlparse, urlencode
 
 __all__ = [
-    'RequestException',
-    'ConnectionError',
-    'HTTPError',
-    'get',
-    'post',
+    "RequestException",
+    "ConnectionError",
+    "HTTPError",
+    "get",
+    "post",
 ]
 
 
 class RequestException(IOError):
-
     def __repr__(self) -> str:
         return self.__str__()
 
 
 class ConnectionError(RequestException):
-
     def __init__(self, message: str, url: str):
         super().__init__(message)
         self.message = message
         self.url = url
 
     def __str__(self) -> str:
-        return f'ConnectionError for url {self.url}: {self.message}'
+        return f"ConnectionError for url {self.url}: {self.message}"
 
 
 class HTTPError(RequestException):
-
-    def __init__(self, response: 'Response'):
+    def __init__(self, response: "Response"):
         self.response = response
 
     def __str__(self) -> str:
-        return f'HTTPError: {self.response.status_code} for url: {self.response.url}'
+        return f"HTTPError: {self.response.status_code} for url: {self.response.url}"
 
 
 class HTTPMessage(Message):
-
     def update(self, dct: Dict[str, str]) -> None:
         for key, value in dct.items():
             self[key] = value
@@ -92,16 +88,16 @@ class Response:
     NULL = object()
 
     def __init__(self):
-        self.encoding: str = 'utf-8'
+        self.encoding: str = "utf-8"
         self.status_code: int = -1
         self.headers: Dict[str, str] = {}
-        self.url: str = ''
-        self.content: bytes = b''
+        self.url: str = ""
+        self.content: bytes = b""
         self._text = None
         self._json = self.NULL
 
     def __str__(self) -> str:
-        return f'<Response [{self.status_code}]>'
+        return f"<Response [{self.status_code}]>"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -125,47 +121,53 @@ class Response:
                 self._json = _json.loads(self.content)
             return self._json
         except ValueError as exc:
-            raise ValueError('Response content is not a valid JSON') from exc
+            raise ValueError("Response content is not a valid JSON") from exc
 
     def raise_for_status(self) -> None:
         if not self.ok:
             raise HTTPError(self)
 
 
-def _create_request(url_structure, params=None, data=None, headers=None, auth=None, json=None):
+def _create_request(
+    url_structure, params=None, data=None, headers=None, auth=None, json=None
+):
     query = url_structure.query
     if params is not None:
-        separator = '&' if query else ''
+        separator = "&" if query else ""
         query += separator + urlencode(params)
-    full_url = url_structure.scheme + '://' + url_structure.netloc + url_structure.path
+    full_url = url_structure.scheme + "://" + url_structure.netloc + url_structure.path
     if query:
-        full_url += '?' + query
+        full_url += "?" + query
     prepared_headers = HTTPMessage()
     if headers is not None:
         prepared_headers.update(headers)
     body = None
     if json is not None:
-        body = _json.dumps(json).encode('utf-8')
-        prepared_headers['Content-Type'] = 'application/json'
+        body = _json.dumps(json).encode("utf-8")
+        prepared_headers["Content-Type"] = "application/json"
     if body is None and data is not None:
-        body = urlencode(data).encode('utf-8')
-        prepared_headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        body = urlencode(data).encode("utf-8")
+        prepared_headers["Content-Type"] = "application/x-www-form-urlencoded"
     if auth is not None:
-        encoded_credentials = b64encode((auth[0] + ':' + auth[1]).encode('utf-8')).decode('utf-8')
-        prepared_headers['Authorization'] = f'Basic {encoded_credentials}'
-    if 'Accept-Encoding' not in prepared_headers:
-        prepared_headers['Accept-Encoding'] = 'gzip'
+        encoded_credentials = b64encode(
+            (auth[0] + ":" + auth[1]).encode("utf-8")
+        ).decode("utf-8")
+        prepared_headers["Authorization"] = f"Basic {encoded_credentials}"
+    if "Accept-Encoding" not in prepared_headers:
+        prepared_headers["Accept-Encoding"] = "gzip"
     return url_request.Request(full_url, body, prepared_headers)
 
 
-def post(url: str,
-         params: Optional[Dict[str, Any]] = None,
-         data: Optional[Dict[str, Any]] = None,
-         headers: Optional[Dict[str, str]] = None,
-         auth: Optional[Tuple[str, str]] = None,
-         timeout: Optional[float] = None,
-         verify: bool = True,
-         json: Optional[Dict[str, Any]] = None) -> Response:
+def post(
+    url: str,
+    params: Optional[Dict[str, Any]] = None,
+    data: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    auth: Optional[Tuple[str, str]] = None,
+    timeout: Optional[float] = None,
+    verify: bool = True,
+    json: Optional[Dict[str, Any]] = None,
+) -> Response:
     """
     POST request
 
@@ -187,7 +189,7 @@ def post(url: str,
     url_structure = urlparse(url)
     request = _create_request(url_structure, params, data, headers, auth, json)
     context = None
-    if url_structure.scheme == 'https':
+    if url_structure.scheme == "https":
         context = ssl.SSLContext()
         if not verify:
             context.verify_mode = ssl.CERT_NONE
@@ -206,10 +208,10 @@ def post(url: str,
         if fp is not None:
             fp.close()
     response = Response()
-    response.status_code = r.status if hasattr(r, 'status') else r.getstatus()
+    response.status_code = r.status if hasattr(r, "status") else r.getstatus()
     response.headers = r.headers
-    response.url = r.url if hasattr(r, 'url') else r.geturl()
-    if r.headers.get('Content-Encoding') == 'gzip':
+    response.url = r.url if hasattr(r, "url") else r.geturl()
+    if r.headers.get("Content-Encoding") == "gzip":
         temp_fo = io.BytesIO(content)
         gzip_file = gzip.GzipFile(fileobj=temp_fo)
         content = gzip_file.read()
@@ -217,12 +219,14 @@ def post(url: str,
     return response
 
 
-def get(url: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
-        auth: Optional[Tuple[str, str]] = None,
-        timeout: Optional[float] = None,
-        verify: bool = True) -> Response:
+def get(
+    url: str,
+    params: Optional[Dict[str, Any]] = None,
+    headers: Optional[Dict[str, str]] = None,
+    auth: Optional[Tuple[str, str]] = None,
+    timeout: Optional[float] = None,
+    verify: bool = True,
+) -> Response:
     """
     GET request
 
@@ -237,4 +241,11 @@ def get(url: str,
     :param verify: verify SSL certificates
     :return: Response object
     """
-    return post(url=url, params=params, headers=headers, auth=auth, timeout=timeout, verify=verify)
+    return post(
+        url=url,
+        params=params,
+        headers=headers,
+        auth=auth,
+        timeout=timeout,
+        verify=verify,
+    )
