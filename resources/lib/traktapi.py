@@ -41,7 +41,7 @@ class traktAPI(object):
             }
 
         # Initialize tvdb api
-        tvdb_api = tvdbAPI()
+        # self.tvdb_api = tvdbAPI()
 
         # Configure
         Trakt.configuration.defaults.client(

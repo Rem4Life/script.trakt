@@ -77,6 +77,7 @@ class traktService:
             elif action == 'settings':
                 kodiUtilities.showSettings()
             elif action == 'auth_info':
+                logger.debug("[Personal debug logging]: Trying to login here!")
                 xbmc.executebuiltin('Dialog.Close(all, true)')
                 # init traktapi class
                 globals.traktapi = traktAPI(True)
