@@ -464,8 +464,8 @@ def compareEpisodes(
     rating=False,
 ):
     shows = []
-    # logger.debug("epi shows_col1 %s" % shows_col1)
-    # logger.debug("epi shows_col2 %s" % shows_col2)
+    logger.debug("epi shows_col1 %s" % shows_col1)
+    logger.debug("epi shows_col2 %s" % shows_col2)
     for show_col1 in shows_col1["shows"]:
         if show_col1:
             show_col2 = findMediaObject(
@@ -637,6 +637,10 @@ def compareEpisodes(
                         if countEpisodes([show]) > 0:
                             shows.append(show)
     result = {"shows": shows}
+
+    logger.debug("[Personal debugging]: All compared shows.")
+    logger.debug(shows)
+
     return result
 
 

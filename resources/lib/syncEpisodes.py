@@ -213,6 +213,10 @@ class SyncEpisodes:
             resultWatched["shows"].append(showWatched)
 
         self.sync.UpdateProgress(10, line2=kodiUtilities.getString(32098))
+
+        logger.debug("[Personal debug logging]: __kodiLoadShows resultWatched")
+        logger.debug(resultWatched)
+
         return resultCollected, resultWatched
 
     def __traktLoadShows(self):
@@ -280,8 +284,13 @@ class SyncEpisodes:
                 int(y), line2=kodiUtilities.getString(32102) % (i, x)
             )
 
+            logger.debug("[Personal debug logging]: show")
+            logger.debug(show)
+
             # will keep the data in python structures - just like the KODI response
             show = show.to_dict()
+
+            logger.debug(show)
 
             showsWatched["shows"].append(show)
 
@@ -316,6 +325,9 @@ class SyncEpisodes:
             episodesRated["shows"].append(show)
 
         self.sync.UpdateProgress(25, line2=kodiUtilities.getString(32103))
+
+        logger.debug("[Personal debug logging]: init showsWatched")
+        logger.debug(showsWatched)
 
         return showsCollected, showsWatched, showsRated, episodesRated
 
@@ -369,6 +381,7 @@ class SyncEpisodes:
             addTraktShows = copy.deepcopy(traktShows)
             addKodiShows = copy.deepcopy(kodiShows)
 
+            logger.debug("[Personal debug logging]: __addEpisodesToTraktCollection")
             tmpTraktShowsAdd = utilities.compareEpisodes(
                 addKodiShows,
                 addTraktShows,
@@ -447,6 +460,9 @@ class SyncEpisodes:
             removeTraktShows = copy.deepcopy(traktShows)
             removeKodiShows = copy.deepcopy(kodiShows)
 
+            logger.debug(
+                "[Personal debug logging]: __deleteEpisodesFromTraktCollection"
+            )
             traktShowsRemove = utilities.compareEpisodes(
                 removeTraktShows,
                 removeKodiShows,
@@ -495,6 +511,7 @@ class SyncEpisodes:
                 % utilities.countEpisodes(traktShowsRemove),
             )
 
+    # Syncs all kodi(col1) => trakt(col2)
     def __addEpisodesToTraktWatched(
         self, kodiShows, traktShows, fromPercent, toPercent
     ):
@@ -505,6 +522,7 @@ class SyncEpisodes:
             updateTraktTraktShows = copy.deepcopy(traktShows)
             updateTraktKodiShows = copy.deepcopy(kodiShows)
 
+            logger.debug("[Personal debug logging]: __addEpisodesToTraktWatched")
             traktShowsUpdate = utilities.compareEpisodes(
                 updateTraktKodiShows,
                 updateTraktTraktShows,
@@ -570,6 +588,7 @@ class SyncEpisodes:
                 line3=" ",
             )
 
+    # Syncs all trakt(col2) => kodi(col1)
     def __addEpisodesToKodiWatched(
         self, traktShows, kodiShows, kodiShowsCollected, fromPercent, toPercent
     ):
@@ -580,6 +599,7 @@ class SyncEpisodes:
             updateKodiTraktShows = copy.deepcopy(traktShows)
             updateKodiKodiShows = copy.deepcopy(kodiShows)
 
+            logger.debug("[Personal debug logging]: __addEpisodesToKodiWatched")
             kodiShowsUpdate = utilities.compareEpisodes(
                 updateKodiTraktShows,
                 updateKodiKodiShows,
@@ -666,6 +686,8 @@ class SyncEpisodes:
         ):
             updateKodiTraktShows = copy.deepcopy(traktShows)
             updateKodiKodiShows = copy.deepcopy(kodiShows)
+
+            logger.debug("[Personal debug logging]: __addEpisodeProgressToKodi")
             kodiShowsUpdate = utilities.compareEpisodes(
                 updateKodiTraktShows,
                 updateKodiKodiShows,
@@ -867,6 +889,7 @@ class SyncEpisodes:
             updateKodiTraktShows = copy.deepcopy(traktShows)
             updateKodiKodiShows = copy.deepcopy(kodiShows)
 
+            logger.debug("[Personal debug logging]: __syncEpisodeRatings")
             traktShowsToUpdate = utilities.compareEpisodes(
                 updateKodiKodiShows,
                 updateKodiTraktShows,
@@ -892,6 +915,7 @@ class SyncEpisodes:
                 )
                 self.sync.traktapi.addRating(traktShowsToUpdate)
 
+            logger.debug("[Personal debug logging]: __syncEpisodeRatings")
             kodiShowsUpdate = utilities.compareEpisodes(
                 updateKodiTraktShows,
                 updateKodiKodiShows,
