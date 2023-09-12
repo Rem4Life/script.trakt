@@ -6,6 +6,7 @@ import logging
 from resources.lib import globals
 from resources.lib import kodiUtilities, utilities
 from resources.lib.loggingService import get_logger
+from resources.lib.tmdbapi import is_numbering_absolute
 from pprint import pformat
 
 stream_logger = get_logger("customLogger")
@@ -51,9 +52,9 @@ class SyncEpisodes:
             traktEpisodesRated,
         ) = self.__traktLoadShows()
 
-        stream_logger.debug(
-            "[Episodes Sync] Trakt.tv collected show list: %s" % traktShowsCollected
-        )
+        # stream_logger.debug(
+        #     "[Episodes Sync] Trakt.tv collected show list: %s" % traktShowsCollected
+        # )
 
         if not traktShowsCollected:
             logger.debug(
@@ -142,6 +143,7 @@ class SyncEpisodes:
 
         tvshows = kodiUtilities.kodiRpcToTraktMediaObjects(data)
         logger.debug("[Episode Sync] Getting shows from kodi finished %s" % tvshows)
+        # stream_logger.debug("[Episode Sync] Getting shows from kodi finished %s" % tvshows)
 
         if tvshows is None:
             return None, None
@@ -174,6 +176,10 @@ class SyncEpisodes:
                 "seasons": [],
             }
 
+            stream_logger.debug(
+                "Serie: %s (%s) from [kodi] => [trakt]" % (str(show["title"]), str(show["ids"]["tvdb"]))
+            )
+                
             data = kodiUtilities.kodiJsonRequest(
                 {
                     "jsonrpc": "2.0",
@@ -195,6 +201,7 @@ class SyncEpisodes:
                     "id": 0,
                 }
             )
+
             if not data:
                 logger.debug(
                     "[Episodes Sync] There was a problem getting episode data for '%s', aborting sync."
@@ -206,6 +213,44 @@ class SyncEpisodes:
                     "[Episodes Sync] '%s' has no episodes in Kodi." % show["title"]
                 )
                 continue
+
+            tvdb_id = show["ids"]["tvdb"]
+
+            # Get the entire series info from TVDB.
+            series_info = globals.tvdbapi.get_series_extended(
+                tvdb_id, "episodes", "true"
+            )
+
+            # Get the episodes from the series info.
+            tvdb_episodes = series_info["data"]["episodes"]
+
+            # # Filter out all episodes that are higher then season 1
+            # filtered_tvdb_episodes = [
+            #     episode
+            #     for episode in tvdb_episodes
+            #     if episode["seasonNumber"] > 1
+            # ]
+
+            if is_numbering_absolute(show["ids"]["tmdb"]):
+                for episode in data["episodes"]:
+                    if episode["season"] <= 1:
+                        continue
+
+                    absolute_episode_number = globals.tvdbapi.convert_to_absolute_numbering(
+                        tvdb_episodes, episode["season"], episode["episode"]
+                    )
+                                    
+                    stream_logger.debug(
+                            "Mapped episode %sx%s to 1x%s from [kodi] => [trakt]"
+                            % (
+                                str(episode["season"]),
+                                str(episode["episode"]),
+                                str(absolute_episode_number),
+                            )
+                        )
+                    
+                    episode["season"] = 1
+                    episode["episode"] = absolute_episode_number
 
             if "tvshowid" in show_col1:
                 del show_col1["tvshowid"]
@@ -283,6 +328,15 @@ class SyncEpisodes:
 
             showsCollected["shows"].append(show)
 
+        dummy_season_object = {
+            "number": -1,
+            "episodes": [
+
+            ],
+            "ids": {},
+            "in_watchlist": 0,
+        }
+
         i = 0
         x = float(len(traktShowsWatched))
         showsWatched = {"shows": []}
@@ -296,59 +350,89 @@ class SyncEpisodes:
             # will keep the data in python structures - just like the KODI response
             show = show.to_dict()
 
-            logger.debug("showwwwwshowwwwwshowwwwwshowwwww")
-            logger.debug(show)
-
             seasons = show["seasons"]
-
             has_multiple_seasons = any(item["number"] >= 2 for item in seasons)
 
             if not has_multiple_seasons:
                 stream_logger.debug(
-                    "Serie: %s (%s)" % (str(show["title"]), str(show["ids"]["tvdb"]))
+                    "Serie: %s (%s) from [trakt] => [kodi]" % (str(show["title"]), str(show["ids"]["tvdb"]))
                 )
 
+                # Get all season 1 seasons.
                 episode_objects = next(
                     (season for season in seasons if season.get("number") == 1),
                     None,
                 )["episodes"]
 
+                # Get all episodes as an integer list.
                 episodes = [
                     episode_object["number"] for episode_object in episode_objects
                 ]
 
+                # Filter out all episodes 1 to 10 hardcoded. Since these can never be season 2 in the relative counting.
                 filtered_episodes = [
                     episode for episode in episodes if episode < 1 or episode > 10
                 ]
 
                 if len(filtered_episodes) > 0:
-                    stream_logger.debug(
-                        "Episodes to find: %s", pformat(filtered_episodes)
-                    )
+                    # Effectively map all episodes specified in `filtered_episodes` from absolute to relative counting.
+                    # stream_logger.debug(
+                    #     "Episodes to find: %s", pformat(filtered_episodes)
+                    # )
 
+                    # Get the entire series info from TVDB.
                     series_info = globals.tvdbapi.get_series_extended(
                         show["ids"]["tvdb"], "episodes", "true"
                     )
 
+                    # Get the episodes from the series info.
                     tvdb_episodes = series_info["data"]["episodes"]
 
+                    # Filter out all episodes that are season 1 or higher.
                     filtered_tvdb_episodes = [
                         episode
                         for episode in tvdb_episodes
                         if episode["seasonNumber"] >= 1
                     ]
 
+                    # Iterate over each episode.
                     for episode_number in filtered_episodes:
-                        episode = filtered_tvdb_episodes[episode_number]
+
+                        # Grab the corresponding TVDB episode.
+                        tvdb_episode = filtered_tvdb_episodes[episode_number - 1]
 
                         stream_logger.debug(
-                            "Mapped episode %s to %sx%s"
+                            "Mapped episode 1x%s to %sx%s from [trakt] => [kodi]"
                             % (
                                 str(episode_number),
-                                str(episode["seasonNumber"]),
-                                str(episode["number"]),
+                                str(tvdb_episode["seasonNumber"]),
+                                str(tvdb_episode["number"]),
                             )
                         )
+
+                        tmdb_episode = next(episode_object for episode_object in episode_objects if episode_object["number"] == episode_number)
+                        found = False
+
+                        try:
+                            season_to_add = next(season for season in seasons if season["number"] == tvdb_episode["seasonNumber"])
+                        except Exception as e:
+                            found = True
+                            season_to_add = copy.deepcopy(dummy_season_object)
+                            season_to_add["number"] = tvdb_episode["seasonNumber"]
+
+                        deep_copy_tmdb_episode = copy.deepcopy(tmdb_episode)
+                        deep_copy_tmdb_episode["number"] = tvdb_episode["number"]
+
+                        season_to_add["episodes"].append(deep_copy_tmdb_episode)
+
+                        if found:
+                            seasons.append(season_to_add)
+
+                        # season_from_which_to_remove_the_episode = next(season["episodes"] for season in seasons if season["number"] == 1)
+                        # season_from_which_to_remove_the_episode.remove(tmdb_episode)
+
+                    # stream_logger.debug("SHOW")
+                    # stream_logger.debug(show)
 
             showsWatched["shows"].append(show)
 
