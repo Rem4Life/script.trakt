@@ -4,17 +4,23 @@
 import xbmc
 import xbmcaddon
 import xbmcgui
+import logging
+
 from resources.lib import utilities
 from resources.lib import kodiUtilities
 from resources.lib import globals
-import logging
 
+from resources.lib import anilist
+from resources.lib.loggingService import get_logger
+
+
+stream_logger = get_logger("customLogger")
 logger = logging.getLogger(__name__)
 
 __addon__ = xbmcaddon.Addon("script.trakt")
 
 
-def ratingCheck(media_type, items_to_rate, watched_time, total_time):
+def ratingCheck(media_type, items_to_rate, watched_time, total_time, show_summary):
     """Check if a video should be rated and if so launches the rating dialog"""
     logger.debug("Rating Check called for '%s'" % media_type)
     if not kodiUtilities.getSettingAsBool("rate_%s" % media_type):
@@ -25,7 +31,7 @@ def ratingCheck(media_type, items_to_rate, watched_time, total_time):
         return
     watched = (watched_time / total_time) * 100
     if watched >= kodiUtilities.getSettingAsFloat("rate_min_view_time"):
-        rateMedia(media_type, items_to_rate)
+        rateMedia(media_type, items_to_rate, show_summary)
     else:
         logger.debug(
             "'%s' does not meet minimum view time for rating (watched: %0.2f%%, minimum: %0.2f%%)"
@@ -37,8 +43,11 @@ def ratingCheck(media_type, items_to_rate, watched_time, total_time):
         )
 
 
-def rateMedia(media_type, itemsToRate, unrate=False, rating=None):
+def rateMedia(media_type, itemsToRate, show_summary=None, unrate=False, rating=None):
     """Launches the rating dialog"""
+    stream_logger.debug("Items to rate: %s" % itemsToRate)
+    stream_logger.debug("Show to rate: %s" % show_summary)
+
     for summary_info in itemsToRate:
         if not utilities.isValidMediaType(media_type):
             logger.debug("Not a valid media type")
@@ -59,7 +68,9 @@ def rateMedia(media_type, itemsToRate, unrate=False, rating=None):
 
             if not rating is None:
                 logger.debug("'%s' is being unrated." % s)
-                __rateOnTrakt(rating, media_type, summary_info, unrate=True)
+                __rateOnTrakt(
+                    rating, media_type, summary_info, show_summary, unrate=True
+                )
             else:
                 logger.debug("'%s' has not been rated, so not unrating." % s)
 
@@ -71,7 +82,7 @@ def rateMedia(media_type, itemsToRate, unrate=False, rating=None):
                 logger.debug(
                     "Rating for '%s' is being set to '%d' manually." % (s, rating)
                 )
-                __rateOnTrakt(rating, media_type, summary_info)
+                __rateOnTrakt(rating, media_type, summary_info, show_summary)
             else:
                 if rerate:
                     if not summary_info["user"]["ratings"]["rating"] == rating:
@@ -79,7 +90,7 @@ def rateMedia(media_type, itemsToRate, unrate=False, rating=None):
                             "Rating for '%s' is being set to '%d' manually."
                             % (s, rating)
                         )
-                        __rateOnTrakt(rating, media_type, summary_info)
+                        __rateOnTrakt(rating, media_type, summary_info, show_summary)
                     else:
                         kodiUtilities.notification(kodiUtilities.getString(32043), s)
                         logger.debug("'%s' already has a rating of '%d'." % (s, rating))
@@ -119,9 +130,11 @@ def rateMedia(media_type, itemsToRate, unrate=False, rating=None):
                     rating = 0
 
             if rating == 0 or rating == "unrate":
-                __rateOnTrakt(rating, gui.media_type, gui.media, unrate=True)
+                __rateOnTrakt(
+                    rating, gui.media_type, gui.media, show_summary, unrate=True
+                )
             else:
-                __rateOnTrakt(rating, gui.media_type, gui.media)
+                __rateOnTrakt(rating, gui.media_type, gui.media, show_summary)
         else:
             logger.debug("Rating dialog was closed with no rating.")
 
@@ -131,8 +144,66 @@ def rateMedia(media_type, itemsToRate, unrate=False, rating=None):
         rating = None
 
 
-def __rateOnTrakt(rating, media_type, media, unrate=False):
+def __rateOnTrakt(rating, media_type, media, show_summary, unrate=False):
     logger.debug("Sending rating (%s) to Trakt.tv" % rating)
+    stream_logger.debug("media: %s" % show_summary)
+
+    tvdb_id = show_summary["ids"]["tvdb"]
+
+    stream_logger.debug(
+        "====================================================================================================="
+    )
+    stream_logger.debug(
+        "====================================================================================================="
+    )
+
+
+    # stream_logger.debug(media)
+    # stream_logger.debug(show_summary)
+
+    # Get the entire series info from TVDB.
+    series_info = globals.tvdbapi.get_series_extended(tvdb_id, "episodes", "true")
+    # stream_logger.debug("series_info: %s" % series_info)
+
+    # # # Get the episodes from the series info.
+    tvdb_episodes = series_info["data"]["episodes"]
+
+    tvdb_numbered_episodes = []
+    abs_num = 1
+    matchedEpisode = None
+    for eachEpisode in tvdb_episodes:
+        if eachEpisode["seasonNumber"] > 0:
+            tvdb_numbered_episodes.append(
+                {
+                    "title": eachEpisode["name"],
+                    "season": eachEpisode["seasonNumber"],
+                    "number": eachEpisode["number"],
+                    "absolute_number": abs_num,
+                }
+            )
+            if eachEpisode["number"] == media["tvdb_number"] and eachEpisode["seasonNumber"] == media["tvdb_season"]:
+                matchedEpisode = {
+                    "title": eachEpisode["name"],
+                    "season": eachEpisode["seasonNumber"],
+                    "number": eachEpisode["number"],
+                    "absolute_number": abs_num,
+            }
+            abs_num += 1
+
+    stream_logger.debug(matchedEpisode)
+    stream_logger.debug(
+        "====================================================================================================="
+    )
+    stream_logger.debug(
+        "====================================================================================================="
+    )
+    anilist.mainAnilist(show_summary['title'], matchedEpisode['absolute_number'], rating)
+    stream_logger.debug(
+        "====================================================================================================="
+    )
+    stream_logger.debug(
+        "====================================================================================================="
+    )
 
     params = media
     if utilities.isMovie(media_type):

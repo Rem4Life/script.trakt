@@ -173,57 +173,57 @@ class traktAPI(object):
                 else:
                     logger.debug("scrobble() Bad scrobble status")
 
-        if result is None:
-            logger.debug(
-                "[Personal debugging]: Result was null, fetching data ourself."
-            )
-            # logger.debug("[Personal debugging]: token: %s", self.token)
-            logger.debug("[Personal debugging]: tvdb: %s", show["ids"]["tvdb"])
-            logger.debug("[Personal debugging]: season: %s", episode["season"])
-            logger.debug("[Personal debugging]: number: %s", episode["number"])
+        # if result is None:
+        #     logger.debug(
+        #         "[Personal debugging]: Result was null, fetching data ourself."
+        #     )
+        #     # logger.debug("[Personal debugging]: token: %s", self.token)
+        #     logger.debug("[Personal debugging]: tvdb: %s", show["ids"]["tvdb"])
+        #     logger.debug("[Personal debugging]: season: %s", episode["season"])
+        #     logger.debug("[Personal debugging]: number: %s", episode["number"])
 
-            response = globals.tvdbapi.get_series_extended(
-                show["ids"]["tvdb"], "episodes", "true"
-            )
-            episodes = response.get("data").get("episodes")
-            absolute_episode_number = globals.tvdbapi.convert_to_absolute_numbering(
-                episodes, episode["season"], episode["number"]
-            )
+        #     response = globals.tvdbapi.get_series_extended(
+        #         show["ids"]["tvdb"], "episodes", "true"
+        #     )
+        #     episodes = response.get("data").get("episodes")
+        #     absolute_episode_number = globals.tvdbapi.convert_to_absolute_numbering(
+        #         episodes, episode["season"], episode["number"]
+        #     )
 
-            logger.debug("[Personal debugging]: response: %s", response)
-            logger.debug("[Personal debugging]: episodes: %s", episodes)
-            logger.debug(
-                "[Personal debugging]: absolute_episode_number: %s",
-                absolute_episode_number,
-            )
+        #     logger.debug("[Personal debugging]: response: %s", response)
+        #     logger.debug("[Personal debugging]: episodes: %s", episodes)
+        #     logger.debug(
+        #         "[Personal debugging]: absolute_episode_number: %s",
+        #         absolute_episode_number,
+        #     )
 
-            episode["season"] = 1
-            episode["number"] = absolute_episode_number
+        #     episode["season"] = 1
+        #     episode["number"] = absolute_episode_number
 
-            logger.debug("[Personal debugging]: season: %s", episode["season"])
-            logger.debug("[Personal debugging]: number: %s", episode["number"])
+        #     logger.debug("[Personal debugging]: season: %s", episode["season"])
+        #     logger.debug("[Personal debugging]: number: %s", episode["number"])
 
-            # self.scrobbleEpisode(show, episode, percent, status) // Recursive call to scrobbleEpisode maybe?
+        #     # self.scrobbleEpisode(show, episode, percent, status) // Recursive call to scrobbleEpisode maybe?
 
-            with Trakt.configuration.oauth.from_response(self.authorization):
-                with Trakt.configuration.http(retry=True):
-                    if status == "start":
-                        logger.debug("[Personal debugging]: New start")
-                        result = Trakt["scrobble"].start(
-                            show=show, episode=episode, progress=percent
-                        )
-                    elif status == "pause":
-                        logger.debug("[Personal debugging]: New pause")
-                        result = Trakt["scrobble"].pause(
-                            show=show, episode=episode, progress=percent
-                        )
-                    elif status == "stop":
-                        logger.debug("[Personal debugging]: New stop")
-                        result = Trakt["scrobble"].stop(
-                            show=show, episode=episode, progress=percent
-                        )
-                    else:
-                        logger.debug("scrobble() Bad scrobble status")
+        #     with Trakt.configuration.oauth.from_response(self.authorization):
+        #         with Trakt.configuration.http(retry=True):
+        #             if status == "start":
+        #                 logger.debug("[Personal debugging]: New start")
+        #                 result = Trakt["scrobble"].start(
+        #                     show=show, episode=episode, progress=percent
+        #                 )
+        #             elif status == "pause":
+        #                 logger.debug("[Personal debugging]: New pause")
+        #                 result = Trakt["scrobble"].pause(
+        #                     show=show, episode=episode, progress=percent
+        #                 )
+        #             elif status == "stop":
+        #                 logger.debug("[Personal debugging]: New stop")
+        #                 result = Trakt["scrobble"].stop(
+        #                     show=show, episode=episode, progress=percent
+        #                 )
+        #             else:
+        #                 logger.debug("scrobble() Bad scrobble status")
 
         return result
 

@@ -521,11 +521,11 @@ def compareEpisodes(
                                             in season_col2[season][ep]["ids"]
                                         ):
                                             if "ids" in eps:
-                                                eps[ep]["ids"][
-                                                    "episodeid"
-                                                ] = season_col2[season][ep]["ids"][
-                                                    "episodeid"
-                                                ]
+                                                eps[ep]["ids"]["episodeid"] = (
+                                                    season_col2[season][ep]["ids"][
+                                                        "episodeid"
+                                                    ]
+                                                )
                                             else:
                                                 eps[ep]["ids"] = {
                                                     "episodeid": season_col2[season][
@@ -558,11 +558,11 @@ def compareEpisodes(
                                             in collectedSeasons[season][ep]["ids"]
                                         ):
                                             if "ids" in eps:
-                                                eps[ep]["ids"][
-                                                    "episodeid"
-                                                ] = collectedSeasons[season][ep]["ids"][
-                                                    "episodeid"
-                                                ]
+                                                eps[ep]["ids"]["episodeid"] = (
+                                                    collectedSeasons[season][ep]["ids"][
+                                                        "episodeid"
+                                                    ]
+                                                )
                                             else:
                                                 eps[ep]["ids"] = {
                                                     "episodeid": collectedSeasons[
@@ -704,3 +704,13 @@ def _fuzzyMatch(string1, string2, match_percent=55.0):
     return (
         difflib.SequenceMatcher(None, string1, string2).ratio() * 100
     ) >= match_percent
+
+
+def _fuzzyMatchDetails(string1, string2, match_percent=55.0):
+    s = difflib.SequenceMatcher(None, string1, string2)
+    s.find_longest_match(0, len(string1), 0, len(string2))
+    return [
+        (difflib.SequenceMatcher(None, string1, string2).ratio() * 100)
+        >= match_percent,
+        difflib.SequenceMatcher(None, string1, string2).ratio() * 100,
+    ]

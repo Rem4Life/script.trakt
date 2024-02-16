@@ -236,9 +236,11 @@ class traktService:
                 if not "rating" in data:
                     rateMedia(media_type, [summaryInfo])
                 else:
-                    rateMedia(media_type, [summaryInfo], rating=data["rating"])
+                    rateMedia(
+                        media_type, [summaryInfo], None, rating=data["rating"]
+                    )
             elif action == "unrate":
-                rateMedia(media_type, [summaryInfo], unrate=True)
+                rateMedia(media_type, [summaryInfo],None, unrate=True)
         else:
             logger.debug(
                 "doManualRating(): Summary info was empty, possible problem retrieving data from Trakt.tv"

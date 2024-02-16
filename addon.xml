@@ -4,6 +4,7 @@
         <import addon="xbmc.python" version="3.0.0"/>
         <import addon="script.module.trakt" version="4.4.0"/>
         <import addon="script.module.dateutil" version="2.8.1"/>
+        <import addon="script.module.requests" version="2.31.0"/>
     </requires>
     <extension point="xbmc.python.script" library="defaultscript.py">
         <provides>executable</provides>
